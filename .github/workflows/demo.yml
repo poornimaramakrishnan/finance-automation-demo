@@ -15,14 +15,6 @@ on:
         description: "Email address to receive the report"
         required: true
         type: string
-      smtp_user:
-        description: "Gmail address for sending report (sender)"
-        required: false
-        type: string
-      smtp_password:
-        description: "Gmail App Password (16-char app-specific password)"
-        required: false
-        type: string
       drive_credentials:
         description: "Google Drive service account JSON (base64 encoded, optional)"
         required: false
@@ -63,8 +55,8 @@ jobs:
           docker run --rm \
             -e GEMINI_API_KEY="${{ inputs.gemini_api_key }}" \
             -e REPORT_EMAIL="${{ inputs.report_email }}" \
-            -e SMTP_USER="${{ inputs.smtp_user || inputs.report_email }}" \
-            -e SMTP_PASSWORD="${{ inputs.smtp_password }}" \
+            -e SMTP_USER="${{ secrets.SMTP_USER }}" \
+            -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
             -e GOOGLE_DRIVE_CREDENTIALS="$(echo '${{ inputs.drive_credentials }}' | base64 -d 2>/dev/null || echo '')" \
             -e GOOGLE_DRIVE_FOLDER_ID="${{ inputs.drive_folder_id }}" \
             -e OUTPUT_DIR=/app/demo/output \
@@ -98,6 +90,6 @@ jobs:
           echo "| Report Email | \`${{ inputs.report_email }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Gemini API | Configured |" >> $GITHUB_STEP_SUMMARY
           echo "| Google Drive | ${{ inputs.drive_folder_id && 'Configured' || 'Not configured' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Email Delivery | ${{ inputs.smtp_password && 'Configured' || 'Not configured' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Email Delivery | Configured (financeintelauto@gmail.com) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Download the report from the Artifacts section below." >> $GITHUB_STEP_SUMMARY
