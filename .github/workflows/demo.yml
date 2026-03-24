@@ -66,6 +66,7 @@ jobs:
       - name: "Run Finance Pipeline"
         run: |
           docker run --rm \
+            -e PYTHONUNBUFFERED=1 \
             -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
             -e REPORT_EMAIL="${{ inputs.report_email }}" \
             -e OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}" \
