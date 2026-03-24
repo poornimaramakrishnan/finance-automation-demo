@@ -1,11 +1,12 @@
 # ══════════════════════════════════════════════════════════════
 #  Finance Automation - Live Demo
-#  Run this from the Actions tab to process sample statements
+#  Run this from the Actions tab to process bank statements
 #
 #  Two modes:
-#    DEMO MODE  - leave gmail_address blank → processes 11 baked-in sample PDFs
-#    LIVE MODE  - provide gmail_address + gmail_app_password → fetches real PDFs
-#                 from your Gmail inbox and processes them
+#    DEMO MODE  - leave gmail_address blank → fetches statements
+#                 from the built-in demo Gmail inbox
+#    LIVE MODE  - provide your gmail_address + gmail_app_password
+#                 → fetches real PDFs from YOUR Gmail inbox
 # ══════════════════════════════════════════════════════════════
 name: "Run Finance Demo"
 
@@ -74,6 +75,8 @@ jobs:
             -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
             -e GMAIL_ADDRESS="${{ inputs.gmail_address }}" \
             -e GMAIL_APP_PASSWORD="${{ inputs.gmail_app_password }}" \
+            -e DEMO_GMAIL_ADDRESS="${{ secrets.DEMO_GMAIL_ADDRESS }}" \
+            -e DEMO_GMAIL_APP_PASSWORD="${{ secrets.DEMO_GMAIL_APP_PASSWORD }}" \
             -e GOOGLE_DRIVE_CREDENTIALS="$(echo '${{ inputs.drive_credentials }}' | base64 -d 2>/dev/null || echo '')" \
             -e GOOGLE_DRIVE_FOLDER_ID="${{ inputs.drive_folder_id }}" \
             -e OUTPUT_DIR=/app/demo/output \
