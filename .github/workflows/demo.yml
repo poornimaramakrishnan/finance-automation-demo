@@ -53,6 +53,10 @@ jobs:
       - name: "Pull Demo Image"
         run: docker pull ${{ env.DOCKER_IMAGE }}
 
+      # ── Pre-create output dir so Docker volume mount works ──
+      - name: "Prepare Output Directory"
+        run: mkdir -p ${{ github.workspace }}/output
+
       # ── Run the pipeline ──
       - name: "Run Finance Pipeline"
         run: |
@@ -63,16 +67,14 @@ jobs:
             -e SMTP_PASSWORD="${{ inputs.smtp_password }}" \
             -e GOOGLE_DRIVE_CREDENTIALS="$(echo '${{ inputs.drive_credentials }}' | base64 -d 2>/dev/null || echo '')" \
             -e GOOGLE_DRIVE_FOLDER_ID="${{ inputs.drive_folder_id }}" \
+            -e OUTPUT_DIR=/app/demo/output \
             -v ${{ github.workspace }}/output:/app/demo/output \
             ${{ env.DOCKER_IMAGE }}
 
-      # ── Extract report from container ──
-      - name: "Extract Report"
+      # ── List report files ──
+      - name: "List Output Files"
         if: always()
-        run: |
-          mkdir -p output
-          # Copy report files from the mounted volume
-          ls -la ${{ github.workspace }}/output/ || echo "No output directory"
+        run: ls -la ${{ github.workspace }}/output/ || echo "No output files"
 
       # ── Upload HTML report as artifact ──
       - name: "Upload Report Artifact"
