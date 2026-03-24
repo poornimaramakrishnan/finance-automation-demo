@@ -1,6 +1,11 @@
 # ══════════════════════════════════════════════════════════════
 #  Finance Automation - Live Demo
 #  Run this from the Actions tab to process sample statements
+#
+#  Two modes:
+#    DEMO MODE  - leave gmail_address blank → processes 11 baked-in sample PDFs
+#    LIVE MODE  - provide gmail_address + gmail_app_password → fetches real PDFs
+#                 from your Gmail inbox and processes them
 # ══════════════════════════════════════════════════════════════
 name: "Run Finance Demo"
 
@@ -12,9 +17,21 @@ on:
         required: true
         type: string
       report_email:
-        description: "Email address to receive the report"
+        description: "Email address to receive the HTML report"
         required: true
         type: string
+
+      # ── Live Gmail mode (both required together if using live mode) ──
+      gmail_address:
+        description: "YOUR Gmail address (e.g. you@gmail.com) — leave blank to run on demo statements"
+        required: false
+        type: string
+      gmail_app_password:
+        description: "YOUR Gmail App Password (16-char, no spaces) — required if gmail_address is set"
+        required: false
+        type: string
+
+      # ── Optional Google Drive upload ──
       drive_credentials:
         description: "Google Drive service account JSON (base64 encoded, optional)"
         required: false
@@ -57,6 +74,8 @@ jobs:
             -e REPORT_EMAIL="${{ inputs.report_email }}" \
             -e SMTP_USER="${{ secrets.SMTP_USER }}" \
             -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
+            -e GMAIL_ADDRESS="${{ inputs.gmail_address }}" \
+            -e GMAIL_APP_PASSWORD="${{ inputs.gmail_app_password }}" \
             -e GOOGLE_DRIVE_CREDENTIALS="$(echo '${{ inputs.drive_credentials }}' | base64 -d 2>/dev/null || echo '')" \
             -e GOOGLE_DRIVE_FOLDER_ID="${{ inputs.drive_folder_id }}" \
             -e OUTPUT_DIR=/app/demo/output \
@@ -87,6 +106,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.gmail_address && 'LIVE - Gmail inbox' || 'DEMO - sample statements' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gmail Account | ${{ inputs.gmail_address || 'N/A (demo mode)' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Report Email | \`${{ inputs.report_email }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Gemini API | Configured |" >> $GITHUB_STEP_SUMMARY
           echo "| Google Drive | ${{ inputs.drive_folder_id && 'Configured' || 'Not configured' }} |" >> $GITHUB_STEP_SUMMARY
