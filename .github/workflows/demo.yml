@@ -61,7 +61,9 @@ jobs:
 
       # ── Pre-create output dir so Docker volume mount works ──
       - name: "Prepare Output Directory"
-        run: mkdir -p ${{ github.workspace }}/output
+        run: |
+          mkdir -p ${{ github.workspace }}/output
+          chmod 777 ${{ github.workspace }}/output
 
       # ── Run the pipeline ──
       - name: "Run Finance Pipeline"
