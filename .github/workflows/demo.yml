@@ -1,0 +1,94 @@
+# ══════════════════════════════════════════════════════════════
+#  Finance Automation - Live Demo
+#  Run this from the Actions tab to process sample statements
+# ══════════════════════════════════════════════════════════════
+name: "Run Finance Demo"
+
+on:
+  workflow_dispatch:
+    inputs:
+      gemini_api_key:
+        description: "Google Gemini API Key (for AI-powered PDF parsing)"
+        required: true
+        type: string
+      report_email:
+        description: "Email address to receive the report"
+        required: true
+        type: string
+      smtp_user:
+        description: "Gmail address for sending report (sender)"
+        required: false
+        type: string
+      smtp_password:
+        description: "Gmail App Password (16-char app-specific password)"
+        required: false
+        type: string
+      drive_credentials:
+        description: "Google Drive service account JSON (base64 encoded, optional)"
+        required: false
+        type: string
+      drive_folder_id:
+        description: "Google Drive folder ID for uploads (optional)"
+        required: false
+        type: string
+
+env:
+  DOCKER_IMAGE: ghcr.io/poornimaramakrishnan/finance-automation-demo:latest
+
+jobs:
+  run-demo:
+    name: "Process Bank Statements"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Pull the pre-built Docker image ──
+      - name: "Pull Demo Image"
+        run: docker pull ${{ env.DOCKER_IMAGE }}
+
+      # ── Run the pipeline ──
+      - name: "Run Finance Pipeline"
+        run: |
+          docker run --rm \
+            -e GEMINI_API_KEY="${{ inputs.gemini_api_key }}" \
+            -e REPORT_EMAIL="${{ inputs.report_email }}" \
+            -e SMTP_USER="${{ inputs.smtp_user || inputs.report_email }}" \
+            -e SMTP_PASSWORD="${{ inputs.smtp_password }}" \
+            -e GOOGLE_DRIVE_CREDENTIALS="$(echo '${{ inputs.drive_credentials }}' | base64 -d 2>/dev/null || echo '')" \
+            -e GOOGLE_DRIVE_FOLDER_ID="${{ inputs.drive_folder_id }}" \
+            -v ${{ github.workspace }}/output:/app/demo/output \
+            ${{ env.DOCKER_IMAGE }}
+
+      # ── Extract report from container ──
+      - name: "Extract Report"
+        if: always()
+        run: |
+          mkdir -p output
+          # Copy report files from the mounted volume
+          ls -la ${{ github.workspace }}/output/ || echo "No output directory"
+
+      # ── Upload HTML report as artifact ──
+      - name: "Upload Report Artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finance-report-${{ github.run_number }}
+          path: |
+            output/finance_report.html
+            output/transactions.json
+          retention-days: 30
+
+      # ── Post summary to Actions ──
+      - name: "Post Summary"
+        if: always()
+        run: |
+          echo "## Finance Automation Demo - Run #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Report Email | \`${{ inputs.report_email }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Gemini API | Configured |" >> $GITHUB_STEP_SUMMARY
+          echo "| Google Drive | ${{ inputs.drive_folder_id && 'Configured' || 'Not configured' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Email Delivery | ${{ inputs.smtp_password && 'Configured' || 'Not configured' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download the report from the Artifacts section below." >> $GITHUB_STEP_SUMMARY
