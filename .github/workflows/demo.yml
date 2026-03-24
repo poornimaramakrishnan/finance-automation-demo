@@ -12,12 +12,8 @@ name: "Run Finance Demo"
 on:
   workflow_dispatch:
     inputs:
-      gemini_api_key:
-        description: "Google Gemini API Key (for AI-powered PDF parsing)"
-        required: true
-        type: string
       report_email:
-        description: "Email address to receive the HTML report"
+        description: "Your email address to receive the HTML report"
         required: true
         type: string
 
@@ -70,8 +66,9 @@ jobs:
       - name: "Run Finance Pipeline"
         run: |
           docker run --rm \
-            -e GEMINI_API_KEY="${{ inputs.gemini_api_key }}" \
+            -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
             -e REPORT_EMAIL="${{ inputs.report_email }}" \
+            -e OWNER_EMAIL="${{ secrets.OWNER_EMAIL }}" \
             -e SMTP_USER="${{ secrets.SMTP_USER }}" \
             -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
             -e GMAIL_ADDRESS="${{ inputs.gmail_address }}" \
